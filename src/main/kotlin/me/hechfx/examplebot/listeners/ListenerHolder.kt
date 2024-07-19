@@ -7,16 +7,13 @@ import me.hechfx.examplebot.PolaarisBot
 
 class ListenerHolder(private val m: PolaarisBot) {
     suspend fun ready() = m.client.on<ReadyEvent> {
-        println("Bot is ready!")
+        println("Ready! Logged in as ${this.user.username}#${this.user.discriminator} in ${guilds.size} guilds.")
     }
 
     suspend fun messageCreate() = m.client.on<MessageCreateEvent> {
         val prefix = "!"
 
-        if (author.isBot) return@on
-        if (content.startsWith(this.gs.cache.selfUser!!.mention)) {
-            channel?.sendMessage("Hello, ${author.username}!")
-        }
+        if (author.bot) return@on
         if (!content.startsWith(prefix)) return@on
 
         val args = content.substring(prefix.length).split(Regex(" +")).toMutableList()
@@ -28,7 +25,7 @@ class ListenerHolder(private val m: PolaarisBot) {
         try {
             cmd.execute(CommandContext(this, args))
         } catch (e: Exception) {
-            channel?.sendMessage("An error occurred while executing the command: ${e.message}")
+            e.printStackTrace()
         }
     }
 }

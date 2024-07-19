@@ -37,7 +37,7 @@ class GrowSet (
         }
         const val BASE = "https://discord.com/api/v9"
     }
-    val logger = KotlinLogging.logger {}
+    private val logger = KotlinLogging.logger {}
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -45,7 +45,7 @@ class GrowSet (
 
     val gateway = GatewayManager(this, GrowSetOptionsBuilder().apply(options).build())
     val cache = CacheManager()
-    val rest = RestManager(token, cache)
+    val rest = RestManager(token, cache, this)
     val events = MutableSharedFlow<Event>()
     val eventDispatcher = CoroutineScope(Dispatchers.Default + SupervisorJob())
     var ping: Long = -1
@@ -71,8 +71,7 @@ class GrowSet (
                 }
             }
         } catch (e: Exception) {
-            logger.error { "Something has gone wrong with the connection with Discord's WebSocket." }
-            logger.error { "Please check your bot's token." }
+            logger.error(e) { "Something has gone wrong with the connection with Discord's WebSocket." }
         }
     }
 }

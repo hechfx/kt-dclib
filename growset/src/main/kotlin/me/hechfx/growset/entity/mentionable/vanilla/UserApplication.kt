@@ -1,5 +1,6 @@
 package me.hechfx.growset.entity.mentionable.vanilla
 
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import me.hechfx.growset.entity.mentionable.MentionableEntity
 import me.hechfx.growset.entity.mentionable.MentionableEntityType
@@ -13,9 +14,9 @@ class UserApplication(
     val flags: Int,
     val email: String?,
     val discriminator: String,
-    val clan: JsonObject? = null,
+    val clan: JsonElement? = null,
     val bot: Boolean,
     val avatar: String?
 ) : MentionableEntity() {
-    override val type = MentionableEntityType.USER
+    override val mentionableEntityType = MentionableEntityType.USER
 }

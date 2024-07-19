@@ -13,11 +13,10 @@ class PingCommand(m: PolaarisBot) : LegacyCommandBase(
 ) {
     override suspend fun execute(context: CommandContext) {
         val start = System.currentTimeMillis()
-        val ping = context.instance.ping
+        val ping = context.growSet.ping
 
-        context.channel.awaitMessage("Pong! Gateway: ${ping}ms").also {
-            val diff = System.currentTimeMillis() - start
-            it.edit("Pong! Gateway: ${ping}ms\nAPI: ${diff}ms")
-        }
+       val message = context.channel.send("Pong! Gateway: `${ping}ms`").await()
+
+        message.edit("Pong! Gateway: `${ping}ms` - API: `${System.currentTimeMillis() - start}ms`").await()
     }
 }

@@ -1,36 +1,52 @@
 package me.hechfx.growset.entity.primitive.vanilla
 
 import io.ktor.client.request.*
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.serialization.json.*
 import me.hechfx.growset.GrowSet
-import me.hechfx.growset.entity.mentionable.vanilla.Channel
-import me.hechfx.growset.entity.mentionable.vanilla.Role
 import me.hechfx.growset.entity.mentionable.vanilla.User
 import me.hechfx.growset.entity.primitive.PrimitiveEntity
 
 class Message(
-    override val id: String,
-    val type: Type,
-    val gs: GrowSet,
-    val timestamp: String,
-    val mentions: Mentions,
-    val pinned: Boolean,
-    val nonce: String?,
-    val mentionsEveryone: Boolean,
-    val member: Member?,
-    val flags: Int,
-    val embeds: List<Any>,
-    val editedTimestamp: String?,
-    val content: String,
-    val components: List<Any>,
-    val channelId: String,
-    val channel: Channel?,
-    val author: User,
-    val attachments: List<Any>,
-    val guild: Guild?
+    raw: JsonObject,
+    private val growSet: GrowSet
 ) : PrimitiveEntity {
+    override val id = raw["id"]!!.jsonPrimitive.content
+    val idLong = id.toLong()
+    val type = Type.from(raw["type"]!!.jsonPrimitive.int)
+    val timeStamp = raw["timestamp"]!!.jsonPrimitive.content
+    val guild: Guild? = raw["guild_id"]?.jsonPrimitive?.content.let { growSet.cache.getGuildById(it ?: "0") }
+    val flags = raw["flags"]!!.jsonPrimitive.int
+    val channel = guild?.getChannelById(raw["channel_id"]!!.jsonPrimitive.content)
+    val channelId = raw["channel_id"]!!.jsonPrimitive.content
+    val author = User(raw["author"]!!.jsonObject)
+    val content = raw["content"]!!.jsonPrimitive.content
+    val tts = raw["tts"]!!.jsonPrimitive.boolean
+    val pinned = raw["pinned"]!!.jsonPrimitive.boolean
+    val member = guild?.getMemberById(author.id)
+    val embeds = raw["embeds"]!!.jsonArray.map { MessageEmbed(it.jsonObject) }
+    val editedTimestamp = raw["edited_timestamp"]?.jsonPrimitive?.content
+
+    val mentions = if (raw["mentions"]!!.jsonArray.isNotEmpty()) {
+        raw["mentions"]!!.jsonArray.map { User(it.jsonObject) }
+    } else {
+        emptyList()
+    }
+    val mentionRoles = if (raw["mention_roles"]!!.jsonArray.isNotEmpty()) {
+        raw["mention_roles"]!!.jsonArray.map { guild!!.getRoleById(it.jsonPrimitive.content)!! }
+    } else {
+        emptyList()
+    }
+
+    fun edit(content: String) = GlobalScope.async {
+        growSet.rest.edit(
+            channelId,
+            id,
+            content
+        )
+    }
+
     enum class Type(val value: Int, val deletable: Boolean) {
         DEFAULT(0, true),
         RECIPIENT_ADD(1, false),
@@ -73,49 +89,4 @@ class Message(
             fun from(value: Int) = entries.first { it.value == value }
         }
     }
-
-    suspend fun edit(content: String) {
-        val response = GrowSet.http.patch("${GrowSet.BASE}/channels/${channelId}/messages/$id") {
-            headers {
-                append("Authorization", "Bot ${gs.token}")
-                append("Content-Type", "application/json")
-            }
-
-            setBody(buildJsonObject {
-                put("content", content)
-            })
-        }
-
-        if (response.status.value != 200) throw IllegalStateException("Failed to edit message: ${response.status}")
-    }
-
-    class Member(
-        val premiumSince: String?,
-        val roles: List<Role>,
-        val pending: Boolean,
-        val nick: String?,
-        val mute: Boolean,
-        val joinedAt: String,
-        val flags: Int,
-        val deaf: Boolean,
-        val communicationDisabledUntil: String?,
-        val avatar: String?
-    )
-
-    class Mentions(
-        val users: List<User>,
-        val roles: List<Role>
-    )
-
-    class UserMention(
-        val username: String,
-        val publicFlags: Int,
-        val member: Member?,
-        val id: String,
-        val globalName: String?,
-        val discriminator: String,
-        val clan: JsonElement? = null,
-        val avatarDecorationData: JsonElement? = null,
-        val avatar: String?,
-    )
 }

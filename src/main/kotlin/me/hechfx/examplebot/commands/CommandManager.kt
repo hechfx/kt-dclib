@@ -2,6 +2,7 @@ package me.hechfx.examplebot.commands
 
 import me.hechfx.examplebot.commands.vanilla.PingCommand
 import me.hechfx.examplebot.PolaarisBot
+import me.hechfx.examplebot.commands.vanilla.UserInfoCommand
 
 class CommandManager(val m: PolaarisBot) {
     private val commands = mutableListOf<LegacyCommandBase>()
@@ -16,7 +17,8 @@ class CommandManager(val m: PolaarisBot) {
 
     init {
         register(
-            PingCommand(m)
+            PingCommand(m),
+            UserInfoCommand(m)
         )
     }
 }

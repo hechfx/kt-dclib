@@ -1,20 +1,25 @@
 package me.hechfx.growset.entity.mentionable.vanilla
 
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 import me.hechfx.growset.entity.mentionable.MentionableEntity
 import me.hechfx.growset.entity.mentionable.MentionableEntityType
 
 class Role(
-    override val id: String,
-    val unicodeEmoji: String?,
-    val position: Int,
-    val permissions: String,
-    val name: String,
-    val mentionable: Boolean,
-    val managed: Boolean,
-    val icon: String?,
-    val hoist: Boolean,
-    val flags: Int,
-    val color: Int
+    raw: JsonObject
 ) : MentionableEntity() {
-    override val type = MentionableEntityType.ROLE
+    override val id = raw["id"]!!.jsonPrimitive.content
+    override val mentionableEntityType = MentionableEntityType.ROLE
+    val unicodeEmoji = raw["unicode_emoji"]?.jsonPrimitive?.content
+    val position = raw["position"]!!.jsonPrimitive.int
+    val permissions = raw["permissions"]!!.jsonPrimitive.content
+    val name = raw["name"]!!.jsonPrimitive.content
+    val mentionable = raw["mentionable"]!!.jsonPrimitive.boolean
+    val managed = raw["managed"]!!.jsonPrimitive.boolean
+    val icon = raw["icon"]?.jsonPrimitive?.content
+    val hoist = raw["hoist"]!!.jsonPrimitive.boolean
+    val flags = raw["flags"]!!.jsonPrimitive.int
+    val color = raw["color"]!!.jsonPrimitive.int
 }

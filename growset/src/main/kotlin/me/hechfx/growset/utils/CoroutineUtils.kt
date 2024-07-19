@@ -2,6 +2,7 @@ package me.hechfx.growset.utils
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.*
+import me.hechfx.growset.entity.primitive.vanilla.Message
 import java.util.UUID
 
 object CoroutineUtils {
@@ -50,4 +51,6 @@ object CoroutineUtils {
     fun clearInterval(id: UUID) {
         timeCache.invalidate(id)
     }
+
+    suspend fun Deferred<Message>.queue() = this.join()
 }
