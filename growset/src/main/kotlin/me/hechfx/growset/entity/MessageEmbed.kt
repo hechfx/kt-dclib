@@ -1,11 +1,12 @@
-package me.hechfx.growset.entity.primitive.vanilla
+package me.hechfx.growset.entity
 
 import kotlinx.serialization.json.*
-import me.hechfx.growset.entity.primitive.PrimitiveEntity
 
 class MessageEmbed(
     raw: JsonObject
 ) {
+    val json = raw
+
     val title = raw["title"]?.jsonPrimitive?.content
     val description = raw["description"]?.jsonPrimitive?.content
     val url = raw["url"]?.jsonPrimitive?.content

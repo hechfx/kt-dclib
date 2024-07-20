@@ -52,5 +52,5 @@ object CoroutineUtils {
         timeCache.invalidate(id)
     }
 
-    suspend fun Deferred<Message>.queue() = this.join()
+    suspend fun Deferred<*>.queue() = this.join()
 }

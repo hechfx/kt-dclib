@@ -1,10 +1,12 @@
 package me.hechfx.growset.entity.primitive.vanilla
 
-import io.ktor.client.request.*
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.json.*
 import me.hechfx.growset.GrowSet
+import me.hechfx.growset.entity.EmbedBuilder
+import me.hechfx.growset.entity.MessageEmbed
 import me.hechfx.growset.entity.mentionable.vanilla.User
 import me.hechfx.growset.entity.primitive.PrimitiveEntity
 
@@ -27,6 +29,7 @@ class Message(
     val member = guild?.getMemberById(author.id)
     val embeds = raw["embeds"]!!.jsonArray.map { MessageEmbed(it.jsonObject) }
     val editedTimestamp = raw["edited_timestamp"]?.jsonPrimitive?.content
+    val reactions = raw["reactions"]!!.jsonArray.map { Reaction(it.jsonObject) }
 
     val mentions = if (raw["mentions"]!!.jsonArray.isNotEmpty()) {
         raw["mentions"]!!.jsonArray.map { User(it.jsonObject) }
@@ -39,12 +42,50 @@ class Message(
         emptyList()
     }
 
-    fun edit(content: String) = GlobalScope.async {
+    fun edit(content: String) = growSet.rest.restScope.async(
+        start = CoroutineStart.LAZY
+    ) {
         growSet.rest.edit(
             channelId,
             id,
             content
         )
+    }
+
+    class Reaction(
+        raw: JsonObject
+    ) {
+        val count = raw["count"]!!.jsonPrimitive.int
+        val countDetails = CountDetails(
+            raw["count"]!!.jsonPrimitive.int,
+            raw["count"]!!.jsonPrimitive.int
+        )
+        val me = raw["me"]!!.jsonPrimitive.boolean
+        val meBurst = raw["me_burst"]!!.jsonPrimitive.boolean
+
+        class CountDetails(
+            val burst: Int,
+            val normal: Int
+        )
+    }
+
+    class Attachment(
+        val id: Int,
+        val fileName: String,
+        val content: ByteArray
+    )
+
+    class MessageDecorations(
+        val embeds: MutableList<MessageEmbed> = mutableListOf(),
+        val attachments: MutableList<Attachment> = mutableListOf()
+    ) {
+        fun embed(builder: EmbedBuilder.() -> Unit) {
+            embeds += EmbedBuilder().apply(builder).parse()
+        }
+
+        fun uploadAttachment(name: String, content: ByteArray) {
+            attachments += Attachment(attachments.size, name, content)
+        }
     }
 
     enum class Type(val value: Int, val deletable: Boolean) {

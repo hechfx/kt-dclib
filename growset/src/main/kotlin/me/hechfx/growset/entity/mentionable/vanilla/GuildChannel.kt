@@ -37,14 +37,25 @@ open class GuildChannel(
         val parentId = raw["parent_id"]?.jsonPrimitive?.content
     }
 
-    suspend fun send(content: String) = GlobalScope.async(
+    suspend fun send(content: String) = growSet.rest.restScope.async(
         start = CoroutineStart.LAZY
-    ){
+    ) {
         growSet.rest.createMessage(
             id,
             content
         )
     }
+
+    suspend fun send(content: String, builder: Message.MessageDecorations.() -> Unit) = growSet.rest.restScope.async(
+        start = CoroutineStart.LAZY
+    ) {
+        growSet.rest.createMessage(
+            id,
+            content,
+            Message.MessageDecorations().apply(builder)
+        )
+    }
+
 
     enum class Type(val value: Int) {
         GUILD_TEXT(0),

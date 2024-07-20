@@ -22,4 +22,8 @@ class User(
     val avatarDecorationData = raw["avatar_decoration_data"]
     val bannerColor = raw["banner_color"]?.jsonPrimitive?.content
     val clan = raw["clan"]
+
+    fun getAvatarUrl(size: Int, format: String = "png"): String {
+        return "https://cdn.discordapp.com/avatars/$id/$avatar.$format?size=$size"
+    }
 }

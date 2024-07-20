@@ -33,6 +33,7 @@ class PolaarisBot(val configFile: File) {
 
         listenerHolder.ready()
         listenerHolder.messageCreate()
+        listenerHolder.reactionAdd()
 
         client.start()
     }

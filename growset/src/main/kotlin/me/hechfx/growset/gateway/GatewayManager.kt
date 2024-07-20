@@ -229,6 +229,15 @@ class GatewayManager(
                 growSet.events.emit(voiceStateUpdate)
             }
 
+            EventType.MESSAGE_REACTION_ADD -> {
+                val reactionAdd = MessageReactionAddEvent(
+                    data,
+                    growSet
+                )
+
+                growSet.events.emit(reactionAdd)
+            }
+
             else -> logger.warn { "Unhandled event $eventType" }
         }
     }

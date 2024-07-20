@@ -1,9 +1,12 @@
 package me.hechfx.growset.events.vanilla
 
+import kotlinx.coroutines.async
 import kotlinx.serialization.json.*
 import me.hechfx.growset.GrowSet
+import me.hechfx.growset.entity.DiscordEmoji
 import me.hechfx.growset.entity.mentionable.vanilla.User
-import me.hechfx.growset.entity.primitive.vanilla.MessageEmbed
+import me.hechfx.growset.entity.MessageEmbed
+import me.hechfx.growset.entity.primitive.vanilla.Message
 import me.hechfx.growset.events.Event
 
 data class MessageCreateEvent(
@@ -13,6 +16,7 @@ data class MessageCreateEvent(
     override val INTERNAL_NAME = "MESSAGE_CREATE"
     val authorId = response["author"]!!.jsonObject["id"]!!.jsonPrimitive.content
 
+    val id = response["id"]!!.jsonPrimitive.content
     val type = response["type"]!!.jsonPrimitive.int
     val tts = response["tts"]!!.jsonPrimitive.boolean
     val timeStamp = response["timestamp"]!!.jsonPrimitive.content
@@ -34,4 +38,15 @@ data class MessageCreateEvent(
         emptyList()
     }
 
+    fun reply(content: String) = growSet.rest.restScope.async {
+        growSet.rest.createMessage(channel!!.id, content, null, id)
+    }
+
+    fun reply(content: String, builder: Message.MessageDecorations.() -> Unit) = growSet.rest.restScope.async {
+        growSet.rest.createMessage(channel!!.id, content, Message.MessageDecorations().apply(builder), id)
+    }
+
+    fun react(emoji: DiscordEmoji) = growSet.rest.restScope.async {
+        growSet.rest.createReaction(channel!!.id, id, emoji)
+    }
 }

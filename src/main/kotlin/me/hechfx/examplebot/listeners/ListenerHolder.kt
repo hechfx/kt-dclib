@@ -4,10 +4,15 @@ import me.hechfx.examplebot.commands.CommandContext
 import me.hechfx.growset.events.vanilla.MessageCreateEvent
 import me.hechfx.growset.events.vanilla.ReadyEvent
 import me.hechfx.examplebot.PolaarisBot
+import me.hechfx.growset.events.vanilla.MessageReactionAddEvent
 
 class ListenerHolder(private val m: PolaarisBot) {
     suspend fun ready() = m.client.on<ReadyEvent> {
         println("Ready! Logged in as ${this.user.username}#${this.user.discriminator} in ${guilds.size} guilds.")
+    }
+
+    suspend fun reactionAdd() = m.client.on<MessageReactionAddEvent> {
+        println("Reaction added! ${this.emoji.name} by ${this.userId} in ${this.channelId}")
     }
 
     suspend fun messageCreate() = m.client.on<MessageCreateEvent> {
