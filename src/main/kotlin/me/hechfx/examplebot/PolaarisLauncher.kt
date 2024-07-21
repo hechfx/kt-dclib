@@ -3,7 +3,7 @@ package me.hechfx.examplebot
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
-object PolaarisBotLauncher {
+object PolaarisLauncher {
     @JvmStatic
     fun main(args: Array<String>) {
         val tokenFile = File("./token.txt")

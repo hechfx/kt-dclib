@@ -15,6 +15,7 @@ class EmbedBuilder(
     var author: AuthorBuilder? = null,
     var fields: MutableList<FieldBuilder> = mutableListOf()
 ) {
+
     class FieldBuilder(
         var name: String? = null,
         var value: String? = null,
@@ -22,7 +23,12 @@ class EmbedBuilder(
     )
 
     fun field(builder: FieldBuilder.() -> Unit) {
-        fields += FieldBuilder().apply(builder)
+        val builtField = FieldBuilder().apply(builder)
+
+        if (builtField.value == null) throw IllegalStateException("Cannot have a field without a value.")
+        if (fields.size >= 25) throw IllegalStateException("Cannot have more than 25 fields in an embed.")
+
+        fields += builtField
     }
 
     fun author(builder: AuthorBuilder.() -> Unit) {
@@ -50,6 +56,10 @@ class EmbedBuilder(
         image = ImageBuilder().apply(builder)
     }
 
+    fun thumbnail(builder: ImageBuilder.() -> Unit) {
+        thumbnail = ImageBuilder().apply(builder)
+    }
+
     class ImageBuilder(
         var url: String? = null,
         var proxyUrl: String? = null,
@@ -57,7 +67,7 @@ class EmbedBuilder(
         var width: Int? = null
     )
 
-    fun parse() = MessageEmbed(
+    fun build() = MessageEmbed(
         buildJsonObject {
             title?.let { put("title", it) }
             description?.let { put("description", it) }
@@ -103,6 +113,6 @@ class EmbedBuilder(
     )
 
     init {
-        parse()
+        build()
     }
 }

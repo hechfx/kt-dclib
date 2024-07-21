@@ -68,6 +68,7 @@ class DebugCommand(m: PolaarisBot) : LegacyCommandBase(
                     appendLine("`attachment` -> Sends an attachment message")
                     appendLine("`reply` -> Sends a reply")
                     appendLine("`reply-embed` -> Sends a reply with an embed")
+                    appendLine("`react` -> Reacts to the message with a thumbs up emoji and a custom emoji")
                 }
 
                 context.channel.send(message).queue()

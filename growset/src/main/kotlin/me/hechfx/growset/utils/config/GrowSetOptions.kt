@@ -1,45 +1,36 @@
 package me.hechfx.growset.utils.config
 
+import me.hechfx.growset.utils.ActivityType
+import me.hechfx.growset.utils.StatusType
+
 class GrowSetOptions(
-    val intents: Int,
-    val shards: Int,
-    val presence: Presence,
-    val activities: List<Activity>,
-
+    var intents: Int = 0,
+    var presence: PresenceOptions? = null,
+    var shards: Int = 1
 ) {
-    data class Presence(
-        val status: String
-    )
-
-    data class Activity(
-        val name: String,
-        val type: Type,
-    ) {
-        enum class Type(val value: Int) {
-            PLAYING(0),
-            STREAMING(1),
-            LISTENING(2),
-            WATCHING(3),
-            CUSTOM(4),
-            COMPETING(5);
-
-            companion object {
-                fun from(value: Int) = entries.find { it.value == value }!!
-            }
-        }
+    fun presence(block: PresenceOptions.() -> Unit) {
+        val presence = PresenceOptions()
+        presence.block()
+        this.presence = presence
     }
-}
 
-class GrowSetOptionsBuilder(
-    var intents: Int? = 2,
-    var shards: Int? = 1,
-    var activities: List<GrowSetOptions.Activity>? = emptyList(),
-    var presence: GrowSetOptions.Presence? = null,
-) {
-    fun build() = GrowSetOptions(
-        intents!!,
-        shards!!,
-        presence ?: GrowSetOptions.Presence("online"),
-        activities ?: emptyList(),
-    )
+    class PresenceOptions(
+        var status: StatusType = StatusType.ONLINE,
+        var actitivies: List<ActivityOptions> = emptyList()
+    ) {
+        fun status(status: StatusType) {
+            this.status = status
+        }
+
+        fun activity(block: ActivityOptions.() -> Unit) {
+            val activity = ActivityOptions()
+            activity.block()
+            actitivies += activity
+        }
+
+        class ActivityOptions(
+            var name: String? = null,
+            var type: ActivityType? = null
+        )
+    }
 }

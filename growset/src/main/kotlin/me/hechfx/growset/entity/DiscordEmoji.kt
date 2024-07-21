@@ -20,7 +20,6 @@ class DiscordEmoji(
     }
 
     init {
-        println(raw)
         parse()
     }
 

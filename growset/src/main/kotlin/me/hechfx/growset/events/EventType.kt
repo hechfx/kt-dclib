@@ -256,7 +256,10 @@ enum class EventType(val id: String) {
     /**
      * Needs `GUILD_MESSAGE_TYPING` or `DIRECT_MESSAGE_TYPING` intent to be received.
      */
-    TYPING_START("TYPING_START");
+    TYPING_START("TYPING_START"),
+
+    MESSAGE_POLL_VOTE_REMOVE("MESSAGE_POLL_VOTE_REMOVE"),
+    MESSAGE_POLL_VOTE_ADD("MESSAGE_POLL_VOTE_ADD");
 
 
     companion object {

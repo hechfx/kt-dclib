@@ -12,14 +12,16 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.json.*
 import me.hechfx.growset.cache.CacheManager
+import me.hechfx.growset.entity.primitive.vanilla.Message
 import me.hechfx.growset.events.*
 import me.hechfx.growset.gateway.GatewayManager
 import me.hechfx.growset.rest.RestManager
-import me.hechfx.growset.utils.config.GrowSetOptionsBuilder
+import me.hechfx.growset.utils.Constants
+import me.hechfx.growset.utils.config.GrowSetOptions
 
 class GrowSet (
     val token: String,
-    options: GrowSetOptionsBuilder.() -> Unit
+    options: GrowSetOptions.() -> Unit
 ) {
     companion object {
         val http = HttpClient(CIO) {
@@ -43,7 +45,7 @@ class GrowSet (
         ignoreUnknownKeys = true
     }
 
-    val gateway = GatewayManager(this, GrowSetOptionsBuilder().apply(options).build())
+    val gateway = GatewayManager(this, GrowSetOptions().apply(options))
     val cache = CacheManager()
     val rest = RestManager(token, cache, this)
     val events = MutableSharedFlow<Event>()
@@ -56,10 +58,34 @@ class GrowSet (
         }
     }
 
+    suspend fun createMessage(channelId: String, content: String) = rest.restScope.async(
+        start = CoroutineStart.LAZY
+    ) {
+        run {
+            rest.createMessage(channelId, content)
+        }
+    }
+
+    suspend fun createMessage(channelId: String, content: String, builder: Message.MessageDecorations.() -> Unit) = rest.restScope.async(
+        start = CoroutineStart.LAZY
+    ) {
+        run {
+            rest.createMessage(channelId, content, Message.MessageDecorations().apply(builder))
+        }
+    }
+
+    suspend fun createMessage(channelId: String, builder: Message.MessageDecorations.() -> Unit) = rest.restScope.async(
+        start = CoroutineStart.LAZY
+    ) {
+        run {
+            rest.createMessage(channelId, "", Message.MessageDecorations().apply(builder))
+        }
+    }
+
     suspend fun start() {
         try {
             http.webSocket(
-                "wss://gateway.discord.gg/?v=10&encoding=json"
+                Constants.DISCORD_GATEWAY_URL
             ) {
                 while (true) {
                     val rawResponse = incoming.receive() as? Frame.Text

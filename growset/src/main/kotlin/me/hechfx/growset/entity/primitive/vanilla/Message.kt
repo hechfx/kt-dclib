@@ -1,7 +1,6 @@
 package me.hechfx.growset.entity.primitive.vanilla
 
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.json.*
 import me.hechfx.growset.GrowSet
@@ -29,7 +28,7 @@ class Message(
     val member = guild?.getMemberById(author.id)
     val embeds = raw["embeds"]!!.jsonArray.map { MessageEmbed(it.jsonObject) }
     val editedTimestamp = raw["edited_timestamp"]?.jsonPrimitive?.content
-    val reactions = raw["reactions"]!!.jsonArray.map { Reaction(it.jsonObject) }
+    val reactions = raw["reactions"]?.jsonArray?.map { Reaction(it.jsonObject) }
 
     val mentions = if (raw["mentions"]!!.jsonArray.isNotEmpty()) {
         raw["mentions"]!!.jsonArray.map { User(it.jsonObject) }
@@ -76,11 +75,12 @@ class Message(
     )
 
     class MessageDecorations(
+        val content: String = "",
         val embeds: MutableList<MessageEmbed> = mutableListOf(),
         val attachments: MutableList<Attachment> = mutableListOf()
     ) {
         fun embed(builder: EmbedBuilder.() -> Unit) {
-            embeds += EmbedBuilder().apply(builder).parse()
+            embeds += EmbedBuilder().apply(builder).build()
         }
 
         fun uploadAttachment(name: String, content: ByteArray) {

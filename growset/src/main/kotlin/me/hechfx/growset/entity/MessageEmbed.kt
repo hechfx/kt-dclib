@@ -40,24 +40,24 @@ class MessageEmbed(
     ) {
         val name = raw["name"]!!.jsonPrimitive.content
         val value = raw["value"]!!.jsonPrimitive.content
-        val inline = raw["inline"]!!.jsonPrimitive.boolean
+        val inline = raw["inline"]?.jsonPrimitive?.boolean ?: false
     }
 
     class Image(
         raw: JsonObject
     ) {
         val url = raw["url"]!!.jsonPrimitive.content
-        val proxyUrl = raw["proxy_url"]!!.jsonPrimitive.content
-        val height = raw["height"]!!.jsonPrimitive.int
-        val width = raw["width"]!!.jsonPrimitive.int
+        val proxyUrl = raw["proxy_url"]?.jsonPrimitive?.content
+        val height = raw["height"]?.jsonPrimitive?.int
+        val width = raw["width"]?.jsonPrimitive?.int
     }
 
     class Thumbnail(
         raw: JsonObject
     ) {
         val url = raw["url"]!!.jsonPrimitive.content
-        val proxyUrl = raw["proxy_url"]!!.jsonPrimitive.content
-        val height = raw["height"]!!.jsonPrimitive.int
-        val width = raw["width"]!!.jsonPrimitive.int
+        val proxyUrl = raw["proxy_url"]?.jsonPrimitive?.content
+        val height = raw["height"]?.jsonPrimitive?.int
+        val width = raw["width"]?.jsonPrimitive?.int
     }
 }

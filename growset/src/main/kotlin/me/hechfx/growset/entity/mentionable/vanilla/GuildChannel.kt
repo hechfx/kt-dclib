@@ -6,6 +6,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.json.*
 import me.hechfx.growset.GrowSet
+import me.hechfx.growset.entity.MessageEmbed
 import me.hechfx.growset.entity.mentionable.MentionableEntity
 import me.hechfx.growset.entity.mentionable.MentionableEntityType
 import me.hechfx.growset.entity.primitive.vanilla.Message
@@ -52,6 +53,28 @@ open class GuildChannel(
         growSet.rest.createMessage(
             id,
             content,
+            Message.MessageDecorations().apply(builder)
+        )
+    }
+
+    suspend fun send(embed: MessageEmbed) = growSet.rest.restScope.async(
+        start = CoroutineStart.LAZY
+    ) {
+        growSet.rest.createMessage(
+            id,
+            "",
+            Message.MessageDecorations().apply {
+                this.embeds.add(embed)
+            }
+        )
+    }
+
+    suspend fun send(builder: Message.MessageDecorations.() -> Unit) = growSet.rest.restScope.async(
+        start = CoroutineStart.LAZY
+    ) {
+        growSet.rest.createMessage(
+            id,
+            "",
             Message.MessageDecorations().apply(builder)
         )
     }

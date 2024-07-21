@@ -17,36 +17,45 @@ import me.hechfx.growset.cache.CacheManager
 import me.hechfx.growset.entity.DiscordEmoji
 import me.hechfx.growset.entity.primitive.vanilla.Guild
 import me.hechfx.growset.entity.primitive.vanilla.Message
+import me.hechfx.growset.utils.Constants
 
 class RestManager(
     val token: String,
     val cache: CacheManager,
     val growSet: GrowSet
 ) {
-    private val logger = KotlinLogging.logger {}
+    val logger = KotlinLogging.logger {}
     val restScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     suspend fun retrieveUserById(id: String): User {
-        val start = System.currentTimeMillis()
-
         val user = retrieveEntityById<User>(id)
 
-        val end = System.currentTimeMillis()
-        logger.info { "Retrieved user with id $id in ${end - start}ms" }
         cache.users[id] = user
-
         return user
     }
 
+    suspend fun retrieveGuildById(id: String): Guild {
+        val guild = retrieveEntityById<Guild>(id)
+
+        cache.guilds[id] = guild
+        return guild
+    }
+
     suspend inline fun <reified T> retrieveEntityById(id: String): T {
+        val start = System.currentTimeMillis()
+
         return when (T::class) {
             User::class -> {
                 val user = requestAPI("users/$id", HttpMethod.Get) {}
+                logger.info { "Retrieved user with id $id in ${System.currentTimeMillis() - start}ms" }
+
                 User(user.data) as T
             }
 
             Guild::class -> {
                 val guild = requestAPI("guilds/$id", HttpMethod.Get) {}
+                logger.info { "Retrieved guild with id $id in ${System.currentTimeMillis() - start}ms" }
+
                 Guild(guild.data, growSet) as T
             }
             else -> throw IllegalArgumentException("Invalid entity type")
@@ -55,7 +64,7 @@ class RestManager(
 
     suspend inline fun <reified T> requestAPI(endpoint: String, httpMethod: HttpMethod, body: () -> T): DiscordAPIRequest {
         val response = http.request {
-            url("$BASE/$endpoint")
+            url("${Constants.DISCORD_API_URL}/$endpoint")
             method = httpMethod
             headers {
                 append("Authorization", "Bot $token")
@@ -83,32 +92,34 @@ class RestManager(
     }
 
     suspend fun createMessage(channelId: String, content: String, decorations: Message.MessageDecorations? = null, referenceMessage: String? = null): Message {
-        val response = http.submitFormWithBinaryData(
-            "$BASE/channels/$channelId/messages",
-            formData {
-                append("payload_json", buildJsonObject {
-                    put("content", content)
+        val messageObj = buildJsonObject {
+            put("content", content)
 
-                    if (referenceMessage != null) {
-                        put("message_reference", buildJsonObject {
-                            put("message_id", referenceMessage)
-                        })
-                    }
+            if (referenceMessage != null) {
+                put("message_reference", buildJsonObject {
+                    put("message_id", referenceMessage)
+                })
+            }
 
-                    if (decorations != null) {
-                        put("embeds", JsonArray(decorations.embeds.map { it.json }))
-                        if (decorations.attachments.isNotEmpty()) {
-                            put("attachments", buildJsonArray {
-                                decorations.attachments.forEach { attachment ->
-                                    add(buildJsonObject {
-                                        put("id", attachment.id)
-                                        put("name", attachment.fileName)
-                                    })
-                                }
+            if (decorations != null) {
+                put("embeds", JsonArray(decorations.embeds.map { it.json }))
+                if (decorations.attachments.isNotEmpty()) {
+                    put("attachments", buildJsonArray {
+                        decorations.attachments.forEach { attachment ->
+                            add(buildJsonObject {
+                                put("id", attachment.id)
+                                put("name", attachment.fileName)
                             })
                         }
-                    }
-                }.toString(), headers {
+                    })
+                }
+            }
+        }
+
+        val response = http.submitFormWithBinaryData(
+            "${Constants.DISCORD_API_URL}/channels/$channelId/messages",
+            formData {
+                append("payload_json", messageObj.toString(), headers {
                     append(HttpHeaders.ContentType, ContentType.Application.Json)
                 })
 

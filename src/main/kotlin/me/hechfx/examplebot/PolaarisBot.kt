@@ -5,9 +5,11 @@ import me.hechfx.growset.GrowSet
 import me.hechfx.growset.gateway.GatewayIntents
 import me.hechfx.growset.utils.config.GrowSetOptions
 import me.hechfx.examplebot.listeners.ListenerHolder
+import me.hechfx.growset.utils.ActivityType
+import me.hechfx.growset.utils.StatusType
 import java.io.File
 
-class PolaarisBot(val configFile: File) {
+class PolaarisBot(val tokenFile: File) {
     companion object {
         var INSTANCE: PolaarisBot? = null
     }
@@ -16,16 +18,21 @@ class PolaarisBot(val configFile: File) {
     lateinit var commandManager: CommandManager
 
     suspend fun start() {
-        client = GrowSet(configFile.readText()) {
+        client = GrowSet(tokenFile.readText()) {
             intents = GatewayIntents.ALL_INTENTS
-            activities = listOf(
-                GrowSetOptions.Activity(
-                    "with Kotlin",
-                    GrowSetOptions.Activity.Type.PLAYING
+
+            presence {
+                activity {
+                    name = "with Kotlin"
+                    type = ActivityType.PLAYING
+                }
+
+                status(
+                    StatusType.DND
                 )
-            )
-            presence = GrowSetOptions.Presence("online")
+            }
         }
+
         INSTANCE = this
         commandManager = CommandManager(this)
 
@@ -33,7 +40,8 @@ class PolaarisBot(val configFile: File) {
 
         listenerHolder.ready()
         listenerHolder.messageCreate()
-        listenerHolder.reactionAdd()
+        // listenerHolder.reactionAdd() <- works, but the output is annoying
+        // listenerHolder.presenceUpdate() <- works, but the output is annoying
 
         client.start()
     }

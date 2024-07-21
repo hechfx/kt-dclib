@@ -19,6 +19,7 @@ class GatewayManager(
     private val json = Json {
         ignoreUnknownKeys = true
     }
+
     var sessionType: String? = null
     var sessionId: String? = null
     var resumeGatewayUrl: String? = null
@@ -54,18 +55,20 @@ class GatewayManager(
                             0, innerOptions.shards
                         ))
                     })
-                    put("presence", buildJsonObject {
-                        put("status", innerOptions.presence.status)
+                    if (innerOptions.presence != null) {
+                        put("presence", buildJsonObject {
+                            put("status", innerOptions.presence!!.status.value)
 
-                        if (innerOptions.activities.isNotEmpty()) put("activities", buildJsonArray {
-                            innerOptions.activities.forEach {
-                                add(buildJsonObject {
-                                    put("name", it.name)
-                                    put("type", it.type.value)
-                                })
-                            }
+                            if (innerOptions.presence!!.actitivies.isNotEmpty()) put("activities", buildJsonArray {
+                                innerOptions.presence!!.actitivies.forEach {
+                                    add(buildJsonObject {
+                                        put("name", it.name)
+                                        put("type", it.type!!.value)
+                                    })
+                                }
+                            })
                         })
-                    })
+                    }
 
                     put("properties", buildJsonObject {
                         put("os", "linux")
@@ -122,18 +125,21 @@ class GatewayManager(
                         0, innerOptions.shards
                     ))
                 })
-                put("presence", buildJsonObject {
-                    put("status", innerOptions.presence.status)
 
-                    if (innerOptions.activities.isNotEmpty()) put("activities", buildJsonArray {
-                        innerOptions.activities.forEach {
-                            add(buildJsonObject {
-                                put("name", it.name)
-                                put("type", it.type.value)
-                            })
-                        }
+                if (innerOptions.presence != null) {
+                    put("presence", buildJsonObject {
+                        put("status", innerOptions.presence!!.status.value)
+
+                        if (innerOptions.presence!!.actitivies.isNotEmpty()) put("activities", buildJsonArray {
+                            innerOptions.presence!!.actitivies.forEach {
+                                add(buildJsonObject {
+                                    put("name", it.name)
+                                    put("type", it.type!!.value)
+                                })
+                            }
+                        })
                     })
-                })
+                }
 
                 put("properties", buildJsonObject {
                     put("os", "linux")
@@ -229,6 +235,19 @@ class GatewayManager(
                 growSet.events.emit(voiceStateUpdate)
             }
 
+            EventType.VOICE_CHANNEL_STATUS_UPDATE -> {
+                val voiceStatusUpdate = VoiceStatusUpdateEvent(
+                    data,
+                    growSet
+                )
+
+                if (growSet.cache.guilds.containsKey(voiceStatusUpdate.guildId)) {
+                    growSet.cache.guilds[voiceStatusUpdate.guildId] = growSet.rest.retrieveGuildById(voiceStatusUpdate.guildId)
+                }
+
+                growSet.events.emit(voiceStatusUpdate)
+            }
+
             EventType.MESSAGE_REACTION_ADD -> {
                 val reactionAdd = MessageReactionAddEvent(
                     data,
@@ -238,7 +257,85 @@ class GatewayManager(
                 growSet.events.emit(reactionAdd)
             }
 
-            else -> logger.warn { "Unhandled event $eventType" }
+            EventType.MESSAGE_REACTION_REMOVE -> {
+                val reactionRemove = MessageReactionRemoveEvent(
+                    data,
+                    growSet
+                )
+
+                if (reactionRemove.guild != null) {
+                    growSet.cache.guilds.putIfAbsent(reactionRemove.guild.id, reactionRemove.guild)
+                }
+
+                if (!growSet.cache.users.containsKey(reactionRemove.userId)) {
+                    growSet.cache.users[reactionRemove.userId] = growSet.rest.retrieveUserById(reactionRemove.userId)
+                }
+
+                growSet.events.emit(reactionRemove)
+            }
+
+            EventType.PRESENCE_UPDATE -> {
+                val presenceUpdateEvent = PresenceUpdateEvent(
+                    data,
+                    growSet
+                )
+
+                if (!growSet.cache.users.containsKey(presenceUpdateEvent.userId)) {
+                    growSet.cache.users[presenceUpdateEvent.userId] = growSet.rest.retrieveUserById(presenceUpdateEvent.userId)
+                }
+
+                growSet.events.emit(presenceUpdateEvent)
+            }
+
+            EventType.MESSAGE_DELETE -> {
+                val messageDeleteEvent = MessageDeleteEvent(
+                    data,
+                    growSet
+                )
+
+                growSet.events.emit(messageDeleteEvent)
+            }
+
+            EventType.GUILD_MEMBER_REMOVE -> {
+                val guildMemberRemoveEvent = GuildMemberRemoveEvent(
+                    data,
+                    growSet
+                )
+
+                if (growSet.cache.guilds.containsKey(guildMemberRemoveEvent.guildId)) {
+                    growSet.cache.guilds[guildMemberRemoveEvent.guildId] = growSet.rest.retrieveGuildById(guildMemberRemoveEvent.guildId)
+                }
+
+                if (!growSet.cache.users.containsKey(guildMemberRemoveEvent.user!!.id)) {
+                    growSet.cache.users[guildMemberRemoveEvent.user.id] = guildMemberRemoveEvent.user
+                }
+
+                growSet.events.emit(guildMemberRemoveEvent)
+            }
+
+            EventType.TYPING_START -> {
+                val typingStartEvent = TypingStartEvent(
+                    data,
+                    growSet
+                )
+
+                if (typingStartEvent.guildId != null && !growSet.cache.guilds.containsKey(typingStartEvent.guildId)) {
+                    growSet.cache.guilds[typingStartEvent.guildId] =
+                        growSet.rest.retrieveGuildById(typingStartEvent.guildId)
+                }
+
+                if (!growSet.cache.users.containsKey(typingStartEvent.userId)) {
+                    growSet.cache.users[typingStartEvent.userId] =
+                        growSet.rest.retrieveUserById(typingStartEvent.userId)
+                }
+
+                growSet.events.emit(typingStartEvent)
+            }
+
+            else -> {
+                logger.warn { "$data" }
+                logger.warn { "Unhandled event $eventType" }
+            }
         }
     }
 }
